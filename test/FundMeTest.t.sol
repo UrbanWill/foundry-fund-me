@@ -1,29 +1,26 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {Test} from "forge-std/Test.sol";
-import {FundMe} from "../src/Fundme.sol";
 import {DeployFundMe} from "script/DeployFundMe.s.sol";
+import {FundMe} from "src/FundMe.sol";
+import {HelperConfig} from "script/HelperConfig.s.sol";
+import {Test, console} from "forge-std/Test.sol";
+import {StdCheats} from "forge-std/StdCheats.sol";
 
-contract FundMeTest is Test {
+contract FundMeTest is StdCheats, Test {
     FundMe fundMe;
+    HelperConfig public helperConfig;
 
-    address USER = makeAddr("user");
-    uint256 SEND_VALUE = 0.1 ether;
-    uint256 constant STARTING_BALANCE = 10 ether;
+    uint256 public constant SEND_VALUE = 0.1 ether; // just a value to make sure we are sending enough!
     uint256 public constant STARTING_USER_BALANCE = 10 ether;
+    uint256 public constant GAS_PRICE = 1;
 
-    modifier funded() {
-        vm.startPrank(USER);
-        fundMe.fund{value: SEND_VALUE}();
-        vm.stopPrank();
-        _;
-    }
+    address public constant USER = address(1);
 
     function setUp() external {
-        DeployFundMe deployFundMe = new DeployFundMe();
-        fundMe = deployFundMe.run();
-        vm.deal(USER, STARTING_BALANCE);
+        DeployFundMe deployer = new DeployFundMe();
+        (fundMe, helperConfig) = deployer.run();
+        vm.deal(USER, STARTING_USER_BALANCE);
     }
 
     function testMinimumDollarIsFive() public {
@@ -50,6 +47,13 @@ contract FundMeTest is Test {
     function testAddsFunderToArrayOfFunders() public funded {
         address funder = fundMe.getFunder(0);
         assertEq(funder, USER);
+    }
+
+    modifier funded() {
+        vm.prank(USER);
+        fundMe.fund{value: SEND_VALUE}();
+        assert(address(fundMe).balance > 0);
+        _;
     }
 
     function testOnlyOwnerCanWithdrawal() public funded {
