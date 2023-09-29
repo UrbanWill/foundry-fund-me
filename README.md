@@ -13,7 +13,6 @@
     - [Withdraw](#withdraw)
   - [Estimate gas](#estimate-gas)
 - [Formatting](#formatting)
-- [Thank you!](#thank-you)
 
 # Getting Started
 
